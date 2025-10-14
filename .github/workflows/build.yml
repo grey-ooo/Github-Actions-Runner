@@ -1,0 +1,39 @@
+name: Build
+
+permissions:
+  contents: read
+  packages: write
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  push:
+
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Builder
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write # For trunk to post annotations
+      contents: read # For repo checkout
+      packages: write # For pushing images to GHCR
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Docker login"
+        uses: docker/login-action@v3
+        with:
+          registry: git.grey.ooo
+          username: ${{ secrets.GHCR_USERNAME || github.actor }}
+          password: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: "Bake + Publish images (if on main branch)"
+        uses: docker/bake-action@v6
+        with:
+          source: .
+          push: true
+          github-token: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}

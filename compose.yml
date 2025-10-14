@@ -2,4 +2,7 @@ services:
   runner:
     build:
       context: .
-    image: matthewbaggett/act-runner:latest
+      platforms:
+        - linux/amd64
+        - linux/arm64
+    image: git.grey.ooo/grey.ooo/github-actions-runner:latest
