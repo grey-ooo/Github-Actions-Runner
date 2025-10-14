@@ -5,4 +5,4 @@ services:
       platforms:
         - linux/amd64
         - linux/arm64
-    image: git.grey.ooo/grey.ooo/github-actions-runner:latest
+    image: git.grey.ooo/grey.ooo/ga-runner:latest
