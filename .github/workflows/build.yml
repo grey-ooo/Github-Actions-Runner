@@ -45,10 +45,12 @@ jobs:
       #      *runner*.args.http_proxy=${{ secrets.HTTP_PROXY || '' }}
       #      *runner*.args.https_proxy=${{ secrets.HTTP_PROXY || '' }}
 
-      - name: "Build & Push"
+      - name: "Build"
         run: |
           docker compose build \
-            --push \
             --build-arg http_proxy=${{ secrets.HTTP_PROXY || '' }} \
-            --build-arg https_proxy=${{ secrets.HTTPS_PROXY || '' }} \
-              runner embedded-runner
+            --build-arg https_proxy=${{ secrets.HTTPS_PROXY || '' }}
+
+      - name: "Push"
+        run: |
+          docker compose push
