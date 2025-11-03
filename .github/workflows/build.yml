@@ -30,8 +30,8 @@ jobs:
         uses: https://git.grey.ooo/actions/login-action@v3
         with:
           registry: git.grey.ooo
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.GREYOOO_USER || github.actor }}
+          password: ${{ secrets.GREYOOO_PAT || secrets.GITHUB_TOKEN }}
 
       - name: "Set up Docker Buildx"
         uses: https://git.grey.ooo/actions/setup-buildx-action@v3
