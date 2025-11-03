@@ -40,3 +40,6 @@ jobs:
         with:
           source: .
           push: true
+          set: |
+            *runner*.args.http_proxy=${{ secrets.HTTP_PROXY || '' }}
+            *runner*.args.https_proxy=${{ secrets.HTTP_PROXY || '' }}
