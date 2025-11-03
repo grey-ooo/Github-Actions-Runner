@@ -1,8 +1,23 @@
 services:
   runner:
-    build:
+    build: &runner-build
       context: .
       platforms:
         - linux/amd64
-        - linux/arm64
-    image: git.grey.ooo/grey.ooo/ga-runner:latest
+        #- linux/arm64
+      target: runner
+      tags:
+        - git.grey.ooo/actions/runner:latest
+        #- git.grey.ooo/grey.ooo/ga-runner:latest
+        #- matthewbaggett/act-runner:latest
+    image: git.grey.ooo/actions/runner:latest
+    environment:
+      - http_proxy=http://squid.home.grey.ooo:3128
+      - https_proxy=http://squid.home.grey.ooo:3128
+  embedded-runner:
+    build:
+      <<: *runner-build
+      target: embedded-runner
+      tags:
+        - git.grey.ooo/actions/runner:embedded
+    image: git.grey.ooo/actions/runner:embedded

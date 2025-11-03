@@ -1,4 +1,5 @@
-FROM node:22-alpine
+FROM node:22-alpine AS runner
+WORKDIR /build
 RUN <<UPDATE_NPM
 #  npm --version
 #  npm install npm@latest -g
@@ -8,7 +9,7 @@ UPDATE_NPM
 
 ARG PHP_VERSION=8.4
 ARG COMPOSER_VERSION=latest-stable
-ARG BASE_PACKAGES="bash bash-completion \
+ARG BASE_PACKAGES="bash bash-completion shadow \
                    ca-certificates coreutils findutils \
                    tar gzip bzip2 xz zip unzip \
                    procps-ng \
@@ -26,14 +27,18 @@ ARG PHP_PACKAGES="php84 php84-bcmath php84-bz2 php84-calendar php84-ctype php84-
                   php84-sysvmsg php84-sysvsem php84-sysvshm php84-tidy php84-tokenizer php84-xml php84-xmlreader php84-xmlwriter \
                   php84-xsl php84-zip php84-zlib \
                   php84-pecl-apcu php84-pecl-redis php84-pecl-msgpack php84-pecl-xdebug"
-ARG EXTRA_PACKAGES="nginx sqlite postgresql-client mysql-client mariadb-connector-c redis"
+ARG EXTRA_PACKAGES="nginx sqlite postgresql-client mysql-client mariadb-connector-c redis yq jq sudo"
 
+RUN sed -i 's/https:\/\//http:\/\//g' /etc/apk/repositories
 RUN apk add --no-cache $BASE_PACKAGES
 RUN apk add --no-cache $DOCKER_PACKAGES
 RUN apk add --no-cache $AWS_PACKAGES
 RUN apk add --no-cache $GO_PACKAGES
 RUN apk add --no-cache $PHP_PACKAGES
 RUN apk add --no-cache $EXTRA_PACKAGES
+RUN chsh root -s /bin/bash
+
+SHELL ["/bin/bash", "-c"]
 
 RUN <<FIX_PHP
   set -ue
@@ -61,4 +66,23 @@ RUN <<INSTALL_COMPOSER
   composer --version
 INSTALL_COMPOSER
 
-RUN apk add --no-cache yq jq sudo
+RUN <<INSTALL_TRUNK
+    npm install -D @trunkio/launcher
+INSTALL_TRUNK
+
+COPY ./fs/. /
+ENV BASH_ENV="/etc/bash.bashrc"
+
+RUN <<CONFIGURE
+  date -u +"%Y-%m-%dT%H:%M:%SZ" > /etc/build-time
+
+  # Setup known hosts for git over ssh
+  mkdir -p /root/.ssh
+  touch /root/.ssh/known_hosts
+  ssh-keyscan -p 222 git.grey.ooo >> /root/.ssh/known_hosts
+  chmod 644 /root/.ssh/known_hosts
+CONFIGURE
+
+FROM runner AS embedded-runner
+ARG ARDUINO_PACKAGES="arduino-cli"
+RUN apk add --no-cache $ARDUINO_PACKAGES --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
