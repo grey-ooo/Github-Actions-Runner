@@ -84,5 +84,7 @@ RUN <<CONFIGURE
 CONFIGURE
 
 FROM runner AS embedded-runner
+ARG BUILD_ESSENTIAL="alpine-sdk make cmake git build-base linux-headers"
 ARG ARDUINO_PACKAGES="arduino-cli"
+RUN apk add --no-cache $BUILD_ESSENTIAL
 RUN apk add --no-cache $ARDUINO_PACKAGES --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
