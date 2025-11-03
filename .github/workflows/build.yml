@@ -47,4 +47,8 @@ jobs:
 
       - name: "Build & Push"
         run: |
-          docker compose build --push
+          docker compose build \
+            --push \
+            --build-arg http_proxy=${{ secrets.HTTP_PROXY || '' }} \
+            --build-arg https_proxy=${{ secrets.HTTPS_PROXY || '' }} \
+              runner embedded-runner
