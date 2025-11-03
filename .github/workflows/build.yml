@@ -36,11 +36,15 @@ jobs:
       - name: "Set up Docker Buildx"
         uses: https://git.grey.ooo/actions/setup-buildx-action@v3
 
-      - name: "Bake + Publish images"
-        uses: https://git.grey.ooo/actions/bake-action@v6
-        with:
-          source: .
-          push: true
-          set: |
-            *runner*.args.http_proxy=${{ secrets.HTTP_PROXY || '' }}
-            *runner*.args.https_proxy=${{ secrets.HTTP_PROXY || '' }}
+      #- name: "Bake + Publish images"
+      #  uses: https://git.grey.ooo/actions/bake-action@v6
+      #  with:
+      #    source: .
+      #    push: true
+      #    set: |
+      #      *runner*.args.http_proxy=${{ secrets.HTTP_PROXY || '' }}
+      #      *runner*.args.https_proxy=${{ secrets.HTTP_PROXY || '' }}
+
+      - name: "Build & Push"
+        run: |
+          docker compose build --push
