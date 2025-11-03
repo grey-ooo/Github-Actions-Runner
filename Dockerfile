@@ -1,4 +1,4 @@
-FROM node:22-alpine AS runner
+FROM git.grey.ooo/mirrors/node:22-alpine AS runner
 WORKDIR /build
 RUN <<UPDATE_NPM
 #  npm --version
