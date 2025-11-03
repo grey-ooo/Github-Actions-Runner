@@ -11,9 +11,6 @@ services:
         #- git.grey.ooo/grey.ooo/ga-runner:latest
         #- matthewbaggett/act-runner:latest
     image: git.grey.ooo/actions/runner:latest
-    environment:
-      - http_proxy=http://squid.home.grey.ooo:3128
-      - https_proxy=http://squid.home.grey.ooo:3128
   embedded-runner:
     build:
       <<: *runner-build

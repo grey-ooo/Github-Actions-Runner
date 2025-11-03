@@ -23,14 +23,15 @@ jobs:
       contents: read # For repo checkout
       packages: write # For pushing images to GHCR
     steps:
-      - uses: https://git.grey.ooo/actions/checkout@v5
+      - name: "Checkout"
+        uses: https://git.grey.ooo/actions/checkout@v5
 
       - name: "Docker login"
         uses: https://git.grey.ooo/actions/login-action@v3
         with:
           registry: git.grey.ooo
-          username: ${{ secrets.FORGEJO_USERNAME || github.actor }}
-          password: ${{ secrets.FORGEJO_PAT || secrets.GITHUB_TOKEN }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Set up Docker Buildx"
         uses: https://git.grey.ooo/actions/setup-buildx-action@v3
