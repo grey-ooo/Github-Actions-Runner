@@ -1,12 +1,17 @@
 FROM git.grey.ooo/mirrors/node:22-alpine AS runner
-WORKDIR /build
+WORKDIR /root
 RUN <<UPDATE_NPM
 #  npm --version
 #  npm install npm@latest -g
 #  npm --version
   npm update -g
 UPDATE_NPM
+ENV PATH="/root/node_modules/.bin:${PATH}"
+RUN <<INSTALL_TRUNK
+  npm install -D @trunkio/launcher
+INSTALL_TRUNK
 
+WORKDIR /build
 ARG PHP_VERSION=8.4
 ARG COMPOSER_VERSION=latest-stable
 ARG BASE_PACKAGES="bash bash-completion shadow \
@@ -65,10 +70,6 @@ RUN <<INSTALL_COMPOSER
 
   composer --version
 INSTALL_COMPOSER
-
-RUN <<INSTALL_TRUNK
-    npm install -D @trunkio/launcher
-INSTALL_TRUNK
 
 COPY ./fs/. /
 ENV BASH_ENV="/etc/bash.bashrc"
