@@ -33,26 +33,25 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: "Set up Docker Buildx"
-        uses: https://git.grey.ooo/actions/setup-buildx-action@v3
+      #- name: "Set up Docker Buildx"
+      #  uses: https://git.grey.ooo/actions/setup-buildx-action@v3
 
-      - name: "Bake Images"
-        uses: https://git.grey.ooo/actions/bake-action@v6
-        with:
-          source: .
-          push: false
-          set: |
-            *runner*.args.http_proxy=${{ secrets.HTTP_PROXY || '' }}
-            *runner*.args.https_proxy=${{ secrets.HTTP_PROXY || '' }}
+      #- name: "Bake + Publish images"
+      #  uses: https://git.grey.ooo/actions/bake-action@v6
+      #  with:
+      #    source: .
+      #    push: true
+      #    set: |
+      #      *runner*.args.http_proxy=${{ secrets.HTTP_PROXY || '' }}
+      #      *runner*.args.https_proxy=${{ secrets.HTTP_PROXY || '' }}
 
-      - name: "Push images"
-        uses: https://git.grey.ooo/actions/bake-action@v6
-        #if: ${{ github.ref == 'refs/heads/main' }}
-        with:
-          source: .
-          push: true
-          set: |
-            *runner*.args.http_proxy=${{ secrets.HTTP_PROXY || '' }}
-            *runner*.args.https_proxy=${{ secrets.HTTP_PROXY || '' }}
-        env:
-          BUILDX_BAKE_GIT_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Build"
+        run: |
+          docker compose build \
+            --pull \
+            --build-arg http_proxy=${{ secrets.HTTP_PROXY || '' }} \
+            --build-arg https_proxy=${{ secrets.HTTPS_PROXY || '' }}
+
+      - name: "Push"
+        run: |
+          docker compose push
