@@ -12,7 +12,7 @@ ARG COMPOSER_VERSION=latest-stable
 ARG BASE_PACKAGES="bash bash-completion shadow \
                    ca-certificates coreutils findutils \
                    tar gzip bzip2 xz zip unzip zstd \
-                   procps-ng \
+                   procps-ng ncurses \
                    git openssh-client net-tools iputils-ping \
                    curl wget rsync \
                    nano vim"
