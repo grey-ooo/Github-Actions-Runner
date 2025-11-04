@@ -26,37 +26,37 @@ jobs:
       - name: "Checkout"
         uses: https://git.grey.ooo/actions/checkout@v5
 
-      #- name: "Docker login"
-      #  uses: https://git.grey.ooo/actions/login-action@v3
-      #  with:
-      #    registry: git.grey.ooo
-      #    username: ${{ github.actor }}
-      #    password: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Docker login"
+        uses: https://git.grey.ooo/actions/login-action@v3
+        with:
+          registry: git.grey.ooo
+          username: ${{ secrets.GREYOOO_USER }}
+          password: ${{ secrets.GREYOOO_PAT }}
 
       #- name: "Set up Docker Buildx"
       #  uses: https://git.grey.ooo/actions/setup-buildx-action@v3
 
-      #- name: "Bake + Publish images"
-      #  uses: https://git.grey.ooo/actions/bake-action@v6
-      #  with:
-      #    source: .
-      #    push: true
-      #    set: |
-      #      *runner*.args.http_proxy=${{ secrets.HTTP_PROXY || '' }}
-      #      *runner*.args.https_proxy=${{ secrets.HTTP_PROXY || '' }}
+      - name: "Bake + Publish images"
+        uses: https://git.grey.ooo/actions/bake-action@v6
+        with:
+          source: .
+          push: true
+          set: |
+            *runner*.args.http_proxy=${{ secrets.HTTP_PROXY || '' }}
+            *runner*.args.https_proxy=${{ secrets.HTTP_PROXY || '' }}
 
-      - name: "Build"
-        run: |
-          set -ex
-          docker login git.grey.ooo -u ${{ secrets.GREYOOO_USER }} -p ${{ secrets.GREYOOO_PAT }}
-          docker compose build \
-            --pull \
-            --build-arg http_proxy=${{ secrets.HTTP_PROXY || '' }} \
-            --build-arg https_proxy=${{ secrets.HTTPS_PROXY || '' }}
-
-      - name: "Push"
-        run: |
-          set -ex
-          docker login git.grey.ooo -u ${{ secrets.GREYOOO_USER }} -p ${{ secrets.GREYOOO_PAT }}
-
-          docker compose push
+      #- name: "Build"
+      #  run: |
+      #    set -ex
+      #    docker login git.grey.ooo -u ${{ secrets.GREYOOO_USER }} -p ${{ secrets.GREYOOO_PAT }}
+      #    docker compose build \
+      #      --pull \
+      #      --build-arg http_proxy=${{ secrets.HTTP_PROXY || '' }} \
+      #      --build-arg https_proxy=${{ secrets.HTTPS_PROXY || '' }}
+#
+#      - name: "Push"
+#        run: |
+#          set -ex
+#          docker login git.grey.ooo -u ${{ secrets.GREYOOO_USER }} -p ${{ secrets.GREYOOO_PAT }}
+#
+#          docker compose push
