@@ -47,6 +47,7 @@ jobs:
 
       - name: "Build"
         run: |
+          set -ex
           docker login git.grey.ooo -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
           docker compose build \
             --pull \
@@ -55,4 +56,7 @@ jobs:
 
       - name: "Push"
         run: |
+          set -ex
+          docker login git.grey.ooo -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+
           docker compose push
