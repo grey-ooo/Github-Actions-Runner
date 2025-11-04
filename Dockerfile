@@ -11,7 +11,7 @@ ARG PHP_VERSION=8.4
 ARG COMPOSER_VERSION=latest-stable
 ARG BASE_PACKAGES="bash bash-completion shadow \
                    ca-certificates coreutils findutils \
-                   tar gzip bzip2 xz zip unzip \
+                   tar gzip bzip2 xz zip unzip zstd \
                    procps-ng \
                    git openssh-client net-tools iputils-ping \
                    curl wget rsync \
