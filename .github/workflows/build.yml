@@ -48,7 +48,7 @@ jobs:
       - name: "Build"
         run: |
           set -ex
-          docker login git.grey.ooo -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+          docker login git.grey.ooo -u ${{ secrets.GREYOOO_USER }} -p ${{ secrets.GREYOOO_PAT }}
           docker compose build \
             --pull \
             --build-arg http_proxy=${{ secrets.HTTP_PROXY || '' }} \
@@ -57,6 +57,6 @@ jobs:
       - name: "Push"
         run: |
           set -ex
-          docker login git.grey.ooo -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+          docker login git.grey.ooo -u ${{ secrets.GREYOOO_USER }} -p ${{ secrets.GREYOOO_PAT }}
 
           docker compose push
