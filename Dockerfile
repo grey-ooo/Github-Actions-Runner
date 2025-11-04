@@ -32,7 +32,7 @@ ARG PHP_PACKAGES="php84 php84-bcmath php84-bz2 php84-calendar php84-ctype php84-
                   php84-sysvmsg php84-sysvsem php84-sysvshm php84-tidy php84-tokenizer php84-xml php84-xmlreader php84-xmlwriter \
                   php84-xsl php84-zip php84-zlib \
                   php84-pecl-apcu php84-pecl-redis php84-pecl-msgpack php84-pecl-xdebug"
-ARG EXTRA_PACKAGES="nginx sqlite postgresql-client mysql-client mariadb-connector-c redis yq jq sudo"
+ARG EXTRA_PACKAGES="nginx sqlite postgresql-client mysql-client mariadb-connector-c redis yq jq sudo nmap"
 
 RUN sed -i 's/https:\/\//http:\/\//g' /etc/apk/repositories
 RUN apk add --no-cache $BASE_PACKAGES
