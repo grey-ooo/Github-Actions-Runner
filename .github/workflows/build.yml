@@ -30,8 +30,8 @@ jobs:
         uses: https://git.grey.ooo/actions/login-action@v3
         with:
           registry: git.grey.ooo
-          username: ${{ secrets.GREYOOO_USER || github.actor }}
-          password: ${{ secrets.GREYOOO_PAT || secrets.GITHUB_TOKEN }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Set up Docker Buildx"
         uses: https://git.grey.ooo/actions/setup-buildx-action@v3
@@ -54,3 +54,5 @@ jobs:
           set: |
             *runner*.args.http_proxy=${{ secrets.HTTP_PROXY || '' }}
             *runner*.args.https_proxy=${{ secrets.HTTP_PROXY || '' }}
+        env:
+          BUILDX_BAKE_GIT_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
