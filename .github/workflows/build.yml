@@ -24,17 +24,27 @@ jobs:
       packages: write # For pushing images to GHCR
     steps:
       - name: "Checkout"
-        uses: https://git.grey.ooo/actions/checkout@v5
+        uses: actions/checkout@v5
 
-      - name: "Docker login"
-        uses: https://git.grey.ooo/actions/login-action@v3
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PAT }}
+
+#      - uses: docker/login-action@v3
+#        with:
+#          registry: ghcr.io
+#          username: ${{ github.actor }}
+#          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/login-action@v3
         with:
           registry: git.grey.ooo
           username: ${{ secrets.GREYOOO_USER }}
           password: ${{ secrets.GREYOOO_PAT }}
 
       - name: "Bake + Publish images"
-        uses: https://git.grey.ooo/actions/bake-action@v6
+        uses: docker/bake-action@v6
         with:
           source: .
           push: true

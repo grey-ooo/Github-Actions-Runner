@@ -20,7 +20,7 @@ ARG BASE_PACKAGES="bash bash-completion shadow \
                    procps-ng ncurses \
                    git openssh-client net-tools iputils-ping \
                    curl wget rsync \
-                   nano vim"
+                   nano vim make"
 ARG DOCKER_PACKAGES="docker-cli docker-cli-compose docker-cli-buildx docker-bash-completion"
 ARG AWS_PACKAGES="aws-cli aws-cli-bash-completion"
 ARG GO_PACKAGES="go"
@@ -42,7 +42,6 @@ RUN apk add --no-cache $GO_PACKAGES
 RUN apk add --no-cache $PHP_PACKAGES
 RUN apk add --no-cache $EXTRA_PACKAGES
 RUN chsh root -s /bin/bash
-
 SHELL ["/bin/bash", "-c"]
 
 RUN <<FIX_PHP
@@ -84,8 +83,12 @@ RUN <<CONFIGURE
   chmod 644 /root/.ssh/known_hosts
 CONFIGURE
 
+RUN php84 -m | grep xdebug
+
+
 FROM runner AS embedded-runner
 ARG BUILD_ESSENTIAL="alpine-sdk make cmake git build-base linux-headers"
 ARG ARDUINO_PACKAGES="arduino-cli"
 RUN apk add --no-cache $BUILD_ESSENTIAL
 RUN apk add --no-cache $ARDUINO_PACKAGES --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
+
