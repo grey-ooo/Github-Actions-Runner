@@ -53,3 +53,36 @@ jobs:
         with:
           source: .
           push: true
+
+  mirror:
+    name: Mirror images to git.grey.ooo.
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        tag: ["php-7.4", "php-8.1", "php-8.2", "php-8.3", "php-8.4", "php-8.5", "latest"]
+      max-parallel: 1
+    steps:
+      - name: "Login to Docker Hub"
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PAT }}
+
+      - name: "Login to git.grey.ooo"
+        uses: docker/login-action@v3
+        with:
+          registry: git.grey.ooo
+          username: ${{ secrets.GREYOOO_USER }}
+          password: ${{ secrets.GREYOOO_PAT }}
+
+      - name: Mirror
+        uses: Wandalen/wretry.action@master
+        with:
+          action: whalimeter/gh-action-image-mirror@main
+          with: |
+            image: matthewbaggett/act-runner
+            registry: 'git.grey.ooo/actions/runner'
