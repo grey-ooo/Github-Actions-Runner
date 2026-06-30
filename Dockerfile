@@ -38,7 +38,7 @@ RUN apk add --no-cache $PHP_PACKAGES
 # Conditionally install php$PHP_VER-opcache if it exists.
 RUN if apk info | grep -q "php$PHP_VER-opcache"; then apk add --no-cache php$PHP_VER-opcache; fi
 RUN apk add --no-cache $EXTRA_PACKAGES
-RUN chsh root -s /bin/bash
+RUN chsh root -s /bin/bash || true
 SHELL ["/bin/bash", "-c"]
 
 RUN <<FIX_PHP
