@@ -1,57 +1,48 @@
-FROM git.grey.ooo/mirrors/node:22-alpine AS runner
+ARG PHP_VERSION=8.4
+FROM matthewbaggett/php:${PHP_VERSION} AS runner
 WORKDIR /root
-RUN <<UPDATE_NPM
-#  npm --version
-#  npm install npm@latest -g
-#  npm --version
-  npm update -g
-UPDATE_NPM
-ENV PATH="/root/node_modules/.bin:${PATH}"
-RUN <<INSTALL_TRUNK
-  npm install -D @trunkio/launcher
-INSTALL_TRUNK
+ENV NVM_DIR=/usr/local/nvm
+ENV NODE_VERSION=24
 
 WORKDIR /build
 ARG PHP_VERSION=8.4
 ARG COMPOSER_VERSION=latest-stable
 ARG BASE_PACKAGES="bash bash-completion shadow \
-                   ca-certificates coreutils findutils \
+                   ca-certificates coreutils findutils  \
                    tar gzip bzip2 xz zip unzip zstd \
                    procps-ng ncurses \
                    git openssh-client net-tools iputils-ping \
                    curl wget rsync \
-                   nano vim make"
+                   nano vim make \
+                   libc6-compat musl-dev linux-headers"
 ARG DOCKER_PACKAGES="docker-cli docker-cli-compose docker-cli-buildx docker-bash-completion"
 ARG AWS_PACKAGES="aws-cli aws-cli-bash-completion"
 ARG GO_PACKAGES="go"
-ARG PHP_PACKAGES="php84 php84-bcmath php84-bz2 php84-calendar php84-ctype php84-curl php84-dom php84-exif php84-fileinfo php84-ftp \
-                  php84-fpm php84-gd php84-gettext php84-gmp php84-iconv php84-imap php84-intl php84-ldap php84-mbstring \
-                  php84-mysqli php84-mysqlnd php84-odbc php84-opcache php84-openssl php84-pcntl \
-                  php84-pdo php84-pdo_dblib php84-pdo_mysql php84-pdo_odbc php84-pdo_pgsql php84-pdo_sqlite php84-pgsql php84-phar \
-                  php84-posix php84-session php84-shmop php84-simplexml php84-snmp php84-soap php84-sockets php84-sodium php84-sqlite3 \
-                  php84-sysvmsg php84-sysvsem php84-sysvshm php84-tidy php84-tokenizer php84-xml php84-xmlreader php84-xmlwriter \
-                  php84-xsl php84-zip php84-zlib \
-                  php84-pecl-apcu php84-pecl-redis php84-pecl-msgpack php84-pecl-xdebug"
+ARG PHP_VER=${PHP_VERSION//./}
+ARG PHP_PACKAGES="php$PHP_VER php$PHP_VER-bcmath php$PHP_VER-bz2 php$PHP_VER-calendar php$PHP_VER-ctype php$PHP_VER-curl php$PHP_VER-dom php$PHP_VER-exif php$PHP_VER-fileinfo php$PHP_VER-ftp \
+                  php$PHP_VER-fpm php$PHP_VER-gd php$PHP_VER-gettext php$PHP_VER-gmp php$PHP_VER-iconv php$PHP_VER-imap php$PHP_VER-intl php$PHP_VER-ldap php$PHP_VER-mbstring \
+                  php$PHP_VER-mysqli php$PHP_VER-mysqlnd php$PHP_VER-odbc php$PHP_VER-openssl php$PHP_VER-pcntl \
+                  php$PHP_VER-pdo php$PHP_VER-pdo_dblib php$PHP_VER-pdo_mysql php$PHP_VER-pdo_odbc php$PHP_VER-pdo_pgsql php$PHP_VER-pdo_sqlite php$PHP_VER-pgsql php$PHP_VER-phar \
+                  php$PHP_VER-posix php$PHP_VER-session php$PHP_VER-shmop php$PHP_VER-simplexml php$PHP_VER-snmp php$PHP_VER-soap php$PHP_VER-sockets php$PHP_VER-sodium php$PHP_VER-sqlite3 \
+                  php$PHP_VER-sysvmsg php$PHP_VER-sysvsem php$PHP_VER-sysvshm php$PHP_VER-tidy php$PHP_VER-tokenizer php$PHP_VER-xml php$PHP_VER-xmlreader php$PHP_VER-xmlwriter \
+                  php$PHP_VER-xsl php$PHP_VER-zip php$PHP_VER-zlib \
+                  php$PHP_VER-pecl-apcu php$PHP_VER-pecl-redis php$PHP_VER-pecl-msgpack php$PHP_VER-pecl-xdebug"
 ARG EXTRA_PACKAGES="nginx sqlite postgresql-client mysql-client mariadb-connector-c redis yq jq sudo nmap"
 
-RUN sed -i 's/https:\/\//http:\/\//g' /etc/apk/repositories
+RUN sed -i '/community/s/^#//' /etc/apk/repositories
 RUN apk add --no-cache $BASE_PACKAGES
 RUN apk add --no-cache $DOCKER_PACKAGES
 RUN apk add --no-cache $AWS_PACKAGES
 RUN apk add --no-cache $GO_PACKAGES
 RUN apk add --no-cache $PHP_PACKAGES
+# Conditionally install php$PHP_VER-opcache if it exists.
+RUN if apk info | grep -q "php$PHP_VER-opcache"; then apk add --no-cache php$PHP_VER-opcache; fi
 RUN apk add --no-cache $EXTRA_PACKAGES
 RUN chsh root -s /bin/bash
 SHELL ["/bin/bash", "-c"]
 
 RUN <<FIX_PHP
   set -ue
-  PHP_VER=$(echo $PHP_VERSION | tr -d '.')
-  # if PHP_VER is less than 80, set it to 7
-  if [[ "$PHP_VER" -lt 80 ]]; then
-    PHP_VER=7
-  fi
-
   # Move some binary names around as well as other bits and pieces
   ln -s /etc/php /etc/php${PHP_VER} || true
   ln -s /usr/bin/php${PHP_VER} /usr/bin/php || true
@@ -70,8 +61,14 @@ RUN <<INSTALL_COMPOSER
   composer --version
 INSTALL_COMPOSER
 
+# Install nvm with node and npm and yarn
+RUN <<NODE_INSTALL
+  apk add --no-cache nodejs nodejs-dev yarn npm
+
+  node --version
+NODE_INSTALL
+
 COPY ./fs/. /
-ENV BASH_ENV="/etc/bash.bashrc"
 
 RUN <<CONFIGURE
   date -u +"%Y-%m-%dT%H:%M:%SZ" > /etc/build-time
@@ -83,12 +80,8 @@ RUN <<CONFIGURE
   chmod 644 /root/.ssh/known_hosts
 CONFIGURE
 
-RUN php84 -m | grep xdebug
-
-
-FROM runner AS embedded-runner
-ARG BUILD_ESSENTIAL="alpine-sdk make cmake git build-base linux-headers"
-ARG ARDUINO_PACKAGES="arduino-cli"
-RUN apk add --no-cache $BUILD_ESSENTIAL
-RUN apk add --no-cache $ARDUINO_PACKAGES --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
-
+#FROM runner AS embedded-runner
+#ARG BUILD_ESSENTIAL="alpine-sdk make cmake git build-base linux-headers"
+#ARG ARDUINO_PACKAGES="arduino-cli"
+#RUN apk add --no-cache $BUILD_ESSENTIAL
+#RUN apk add --no-cache $ARDUINO_PACKAGES --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
