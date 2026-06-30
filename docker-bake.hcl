@@ -6,7 +6,7 @@ variable "PHP_VERSION_CURRENT" {
   default = 8.4
 }
 variable "PHP_AVAILABLE_VERSIONS" {
-  default = [8.1, 8.2, 8.3, 8.4, 8.5]
+  default = [7.4, 8.1, 8.2, 8.3, 8.4, 8.5]
 }
 
 variable "COMPOSER_VERSION" {
