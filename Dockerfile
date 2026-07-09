@@ -13,7 +13,7 @@ ARG BASE_PACKAGES="bash bash-completion shadow \
                    procps-ng ncurses \
                    git openssh-client net-tools iputils-ping \
                    curl wget rsync \
-                   nano vim make \
+                   nano vim make g++ \
                    libc6-compat musl-dev linux-headers"
 ARG DOCKER_PACKAGES="docker-cli docker-cli-compose docker-cli-buildx docker-bash-completion"
 ARG AWS_PACKAGES="aws-cli aws-cli-bash-completion"
