@@ -2,6 +2,10 @@ variable "DOCKERHUB_REPO" {
   default = "matthewbaggett/act-runner"
 }
 
+variable "GHCR_REPO" {
+  default = "ghcr.io/grey-ooo/github-actions-runner"
+}
+
 variable "PHP_VERSION_CURRENT" {
   default = 8.4
 }
@@ -35,7 +39,9 @@ target "runner" {
   target     = "runner"
   tags = concat(
     ["${DOCKERHUB_REPO}:php${php}"],
-    php == PHP_VERSION_CURRENT ? ["${DOCKERHUB_REPO}:latest"] : []
+    php == PHP_VERSION_CURRENT ? ["${DOCKERHUB_REPO}:latest"] : [],
+    ["${GHCR_REPO}:php${php}"],
+    php == PHP_VERSION_CURRENT ? ["${GHCR_REPO}:latest"] : []
   )
   args = {
     NODE_VERSION     = "20"
