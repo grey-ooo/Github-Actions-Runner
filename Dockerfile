@@ -1,5 +1,7 @@
 ARG PHP_VERSION=8.4
 FROM matthewbaggett/php:${PHP_VERSION} AS runner
+LABEL org.opencontainers.image.source="https://github.com/grey-ooo/Github-Actions-Runner"
+LABEL org.opencontainers.image.description="Self-hosted GitHub/Forgejo Actions runner image"
 WORKDIR /root
 ENV NVM_DIR=/usr/local/nvm
 ENV NODE_VERSION=24
