@@ -12,7 +12,7 @@ ARG BASE_PACKAGES="bash bash-completion shadow \
                    tar gzip bzip2 xz zip unzip zstd \
                    ncurses \
                    git openssh-client net-tools \
-                   gnupg \
+                   gpg gnupg \
                    curl wget rsync \
                    nano vim make g++ \
                    libc6-compat musl-dev linux-headers"
