@@ -17,7 +17,7 @@ jobs:
   build:
     name: Build Builder
     runs-on: ubuntu-latest
-    container: ghcr.io/grey-ooo/github-actions-runner:latest
+    container: git.grey.ooo/actions/runner
     permissions:
       checks: write # For trunk to post annotations
       contents: read # For repo checkout
