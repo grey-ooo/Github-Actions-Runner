@@ -16,8 +16,10 @@ concurrency:
 jobs:
   build:
     name: Build Builder
+    # Deliberately no `container:`. This workflow builds the runner image, so
+    # running inside it makes the build depend on its own output — a bootstrap
+    # cycle that breaks the moment the tag is missing or unpullable.
     runs-on: ubuntu-latest
-    container: ghcr.io/matthewbaggett/act-runner:php8.5
     permissions:
       checks: write # For trunk to post annotations
       contents: read # For repo checkout
