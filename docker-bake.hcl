@@ -21,11 +21,10 @@ group "default" {
   targets = ["runner"]
 }
 
-variable "PLATFORMS" {
-  default = [
-    "linux/amd64",
-    "linux/arm64"
-  ]
+# Set MULTIARCH=true to build the full platform matrix (done on main only).
+# Everything else builds amd64 only, which keeps PR/branch builds quick.
+variable "MULTIARCH" {
+  default = "false"
 }
 
 target "runner" {
@@ -48,5 +47,5 @@ target "runner" {
     PHP_VERSION      = php
     COMPOSER_VERSION = COMPOSER_VERSION
   }
-  platforms = PLATFORMS
+  platforms = MULTIARCH == "true" ? ["linux/amd64", "linux/arm64"] : ["linux/amd64"]
 }
