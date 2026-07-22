@@ -1,9 +1,17 @@
-variable "DOCKERHUB_REPO" {
-  default = "matthewbaggett/act-runner"
+# Docker Hub and GHCR are co-equal registries: every publish pushes the same
+# tags to both, and neither is conditional on the other.
+#
+# Runner-facing references (the workflow's `container:`, compose.yml) should
+# still prefer GHCR. That is a pull consideration, not a publish one: Docker
+# Hub rate limits anonymous pulls (~100/6h per IP) and the Forgejo runners
+# pull on every job with force_pull, which exhausted the quota and broke every
+# job at the setup step.
+variable "GHCR_REPO" {
+  default = "ghcr.io/matthewbaggett/act-runner"
 }
 
-variable "GHCR_REPO" {
-  default = "ghcr.io/grey-ooo/github-actions-runner"
+variable "DOCKERHUB_REPO" {
+  default = "matthewbaggett/act-runner"
 }
 
 variable "PHP_VERSION_CURRENT" {
@@ -17,6 +25,15 @@ variable "COMPOSER_VERSION" {
   default = "latest-stable"
 }
 
+# Provenance for the OCI labels. CI passes the real commit; local builds get
+# the placeholders from the Dockerfile.
+variable "VCS_REF" {
+  default = "unknown"
+}
+variable "BUILD_DATE" {
+  default = ""
+}
+
 group "default" {
   targets = ["runner"]
 }
@@ -24,13 +41,6 @@ group "default" {
 # Set MULTIARCH=true to build the full platform matrix (done on main only).
 # Everything else builds amd64 only, which keeps PR/branch builds quick.
 variable "MULTIARCH" {
-  default = "false"
-}
-
-# Set GHCR=true to also tag for ghcr.io. Only done on main, and only when a
-# real github.com PAT is configured — the Forgejo-issued GITHUB_TOKEN cannot
-# authenticate against GHCR, so without the PAT the push would just fail.
-variable "GHCR" {
   default = "false"
 }
 
@@ -44,15 +54,17 @@ target "runner" {
   dockerfile = "Dockerfile"
   target     = "runner"
   tags = concat(
+    ["${GHCR_REPO}:php${php}"],
+    php == PHP_VERSION_CURRENT ? ["${GHCR_REPO}:latest"] : [],
     ["${DOCKERHUB_REPO}:php${php}"],
-    php == PHP_VERSION_CURRENT ? ["${DOCKERHUB_REPO}:latest"] : [],
-    GHCR == "true" ? ["${GHCR_REPO}:php${php}"] : [],
-    GHCR == "true" && php == PHP_VERSION_CURRENT ? ["${GHCR_REPO}:latest"] : []
+    php == PHP_VERSION_CURRENT ? ["${DOCKERHUB_REPO}:latest"] : []
   )
   args = {
     NODE_VERSION     = "20"
     PHP_VERSION      = php
     COMPOSER_VERSION = COMPOSER_VERSION
+    VCS_REF          = VCS_REF
+    BUILD_DATE       = BUILD_DATE
   }
   platforms = MULTIARCH == "true" ? ["linux/amd64", "linux/arm64"] : ["linux/amd64"]
 }

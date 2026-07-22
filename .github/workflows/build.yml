@@ -17,86 +17,53 @@ jobs:
   build:
     name: Build Builder
     runs-on: ubuntu-latest
-    container: git.grey.ooo/actions/runner
+    container: ghcr.io/matthewbaggett/act-runner:php8.5
     permissions:
       checks: write # For trunk to post annotations
       contents: read # For repo checkout
       packages: write # For pushing images to GHCR
     env:
-      # We run on Forgejo, so `secrets.GITHUB_TOKEN` is a git.grey.ooo token and
-      # is worthless against ghcr.io — GHCR needs a real github.com PAT with
-      # `write:packages`. Publish to GHCR only when that PAT is configured.
       PUBLISH: ${{ github.ref == 'refs/heads/main' }}
-      GHCR: ${{ github.ref == 'refs/heads/main' && secrets.GHCR_PAT != '' }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-qemu-action@v4
         if: env.PUBLISH == 'true'
         with:
           platforms: linux/amd64,linux/arm64
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
 
-      - uses: docker/login-action@v3
+      # We build on Forgejo, so `secrets.GITHUB_TOKEN` is a git.grey.ooo token
+      # and GHCR rejects it with `denied: denied`. Both registries therefore
+      # authenticate with their own dedicated PAT — GHCR_PAT needs
+      # `write:packages`.
+      - uses: docker/login-action@v4
         if: env.PUBLISH == 'true'
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PAT }}
-
-      - uses: docker/login-action@v3
-        if: env.GHCR == 'true'
         with:
           registry: ghcr.io
           username: ${{ secrets.GHCR_USER }}
           password: ${{ secrets.GHCR_PAT }}
 
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@v4
         if: env.PUBLISH == 'true'
-        with:
-          registry: git.grey.ooo
-          username: ${{ secrets.GREYOOO_USER }}
-          password: ${{ secrets.GREYOOO_PAT }}
-
-      - name: "Bake + Publish images"
-        uses: docker/bake-action@v6
-        env:
-          MULTIARCH: ${{ env.PUBLISH }}
-          GHCR: ${{ env.GHCR }}
-        with:
-          source: .
-          push: ${{ env.PUBLISH == 'true' }}
-
-  mirror:
-    name: Mirror images to git.grey.ooo.
-    needs: build
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    strategy:
-      matrix:
-        tag: ["php-7.4", "php-8.1", "php-8.2", "php-8.3", "php-8.4", "php-8.5", "latest"]
-      max-parallel: 1
-    steps:
-      - name: "Login to Docker Hub"
-        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PAT }}
 
-      - name: "Login to git.grey.ooo"
-        uses: docker/login-action@v3
-        with:
-          registry: git.grey.ooo
-          username: ${{ secrets.GREYOOO_USER }}
-          password: ${{ secrets.GREYOOO_PAT }}
+      # `org.opencontainers.image.created` is specified as when the image was
+      # built, so it has to be generated here — the repository's updated_at is
+      # a different thing entirely and is not reliably populated on Forgejo.
+      - name: "Build timestamp"
+        id: meta
+        run: echo "date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
 
-      - name: Mirror
-        uses: Wandalen/wretry.action@master
+      - name: "Bake + Publish images"
+        uses: docker/bake-action@v7
+        env:
+          MULTIARCH: ${{ env.PUBLISH }}
+          VCS_REF: ${{ github.sha }}
+          BUILD_DATE: ${{ steps.meta.outputs.date }}
         with:
-          action: whalimeter/gh-action-image-mirror@main
-          with: |
-            image: matthewbaggett/act-runner
-            registry: 'git.grey.ooo/actions/runner'
+          source: .
+          push: ${{ env.PUBLISH == 'true' }}

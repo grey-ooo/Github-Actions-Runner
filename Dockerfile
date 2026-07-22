@@ -1,7 +1,15 @@
 ARG PHP_VERSION=8.4
 FROM matthewbaggett/php:${PHP_VERSION} AS runner
-LABEL org.opencontainers.image.source="https://github.com/grey-ooo/Github-Actions-Runner"
+
+# `source` points at the Forgejo repo this is actually built from. Note that
+# GHCR only attaches a package to a github.com repo owned by the same account
+# as the package, so no linkage appears on the GHCR side either way.
+ARG PHP_VERSION
+LABEL org.opencontainers.image.source="https://git.grey.ooo/actions/Github-Actions-Runner"
+LABEL org.opencontainers.image.url="https://git.grey.ooo/actions/Github-Actions-Runner"
+LABEL org.opencontainers.image.title="Github-Actions-Runner"
 LABEL org.opencontainers.image.description="Self-hosted GitHub/Forgejo Actions runner image"
+LABEL org.opencontainers.image.version="php${PHP_VERSION}"
 WORKDIR /root
 ENV NVM_DIR=/usr/local/nvm
 ENV NODE_VERSION=24
@@ -48,6 +56,13 @@ RUN <<CONFIGURE
   ssh-keyscan -p 222 git.grey.ooo >> /root/.ssh/known_hosts
   chmod 644 /root/.ssh/known_hosts
 CONFIGURE
+
+# Kept last: these change on every commit, so declaring them earlier would
+# invalidate the build cache for everything below them.
+ARG VCS_REF="unknown"
+ARG BUILD_DATE=""
+LABEL org.opencontainers.image.revision="${VCS_REF}"
+LABEL org.opencontainers.image.created="${BUILD_DATE}"
 
 #FROM runner AS embedded-runner
 #ARG BUILD_ESSENTIAL="alpine-sdk make cmake git build-base linux-headers"
