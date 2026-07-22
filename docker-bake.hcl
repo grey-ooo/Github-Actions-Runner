@@ -27,6 +27,13 @@ variable "MULTIARCH" {
   default = "false"
 }
 
+# Set GHCR=true to also tag for ghcr.io. Only done on main, and only when a
+# real github.com PAT is configured — the Forgejo-issued GITHUB_TOKEN cannot
+# authenticate against GHCR, so without the PAT the push would just fail.
+variable "GHCR" {
+  default = "false"
+}
+
 target "runner" {
   matrix = {
     php = PHP_AVAILABLE_VERSIONS
@@ -39,8 +46,8 @@ target "runner" {
   tags = concat(
     ["${DOCKERHUB_REPO}:php${php}"],
     php == PHP_VERSION_CURRENT ? ["${DOCKERHUB_REPO}:latest"] : [],
-    ["${GHCR_REPO}:php${php}"],
-    php == PHP_VERSION_CURRENT ? ["${GHCR_REPO}:latest"] : []
+    GHCR == "true" ? ["${GHCR_REPO}:php${php}"] : [],
+    GHCR == "true" && php == PHP_VERSION_CURRENT ? ["${GHCR_REPO}:latest"] : []
   )
   args = {
     NODE_VERSION     = "20"
