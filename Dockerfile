@@ -51,10 +51,11 @@ RUN <<CONFIGURE
   date -u +"%Y-%m-%dT%H:%M:%SZ" > /etc/build-time
 
   # Setup known hosts for git over ssh
-  mkdir -p /root/.ssh
+  mkdir -p /root/.ssh /root/.ssh/.control
   touch /root/.ssh/known_hosts
   ssh-keyscan -p 222 git.grey.ooo >> /root/.ssh/known_hosts
   chmod 644 /root/.ssh/known_hosts
+  chmod 700 /root/.ssh/.control
 CONFIGURE
 
 # Kept last: these change on every commit, so declaring them earlier would
