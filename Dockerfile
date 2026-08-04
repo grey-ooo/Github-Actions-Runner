@@ -27,6 +27,7 @@ ARG BASE_PACKAGES="bash bash-completion shadow \
 ARG DOCKER_PACKAGES="docker-cli docker-cli-compose docker-cli-buildx docker-bash-completion"
 ARG AWS_PACKAGES="aws-cli aws-cli-bash-completion"
 ARG GO_PACKAGES="go"
+ARG TOFU_PACKAGES="opentofu"
 ARG EXTRA_PACKAGES="nginx sqlite postgresql-client mysql-client mariadb-connector-c redis yq jq sudo nmap"
 
 RUN sed -i '/community/s/^#//' /etc/apk/repositories
@@ -34,6 +35,7 @@ RUN apk add --no-cache $BASE_PACKAGES
 RUN apk add --no-cache $DOCKER_PACKAGES
 RUN apk add --no-cache $AWS_PACKAGES
 RUN apk add --no-cache $GO_PACKAGES
+RUN apk add --no-cache $TOFU_PACKAGES
 RUN apk add --no-cache $EXTRA_PACKAGES
 RUN chsh root -s /bin/bash || true
 SHELL ["/bin/bash", "-c"]
@@ -51,10 +53,15 @@ RUN <<CONFIGURE
   date -u +"%Y-%m-%dT%H:%M:%SZ" > /etc/build-time
 
   # Setup known hosts for git over ssh
-  mkdir -p /root/.ssh
+  mkdir -p /root/.ssh /root/.ssh/.control
   touch /root/.ssh/known_hosts
   ssh-keyscan -p 222 git.grey.ooo >> /root/.ssh/known_hosts
   chmod 644 /root/.ssh/known_hosts
+  chmod 700 /root/.ssh/.control
+
+  # OpenTofu ships no bash-completion subpackage, so register the completion
+  # handler ourselves. Appends to /root/.bashrc and /root/.profile.
+  tofu -install-autocomplete
 CONFIGURE
 
 # Kept last: these change on every commit, so declaring them earlier would
