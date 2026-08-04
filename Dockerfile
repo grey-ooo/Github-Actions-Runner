@@ -16,7 +16,7 @@ ENV NODE_VERSION=24
 
 WORKDIR /build
 ARG BASE_PACKAGES="bash bash-completion shadow \
-                   ca-certificates coreutils findutils  \
+                   ca-certificates openssl coreutils findutils  \
                    tar gzip bzip2 xz zip unzip zstd \
                    ncurses \
                    git openssh-client net-tools \
