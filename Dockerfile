@@ -27,7 +27,6 @@ ARG BASE_PACKAGES="bash bash-completion shadow \
 ARG DOCKER_PACKAGES="docker-cli docker-cli-compose docker-cli-buildx docker-bash-completion"
 ARG AWS_PACKAGES="aws-cli aws-cli-bash-completion"
 ARG GO_PACKAGES="go"
-ARG TOFU_PACKAGES="opentofu"
 ARG EXTRA_PACKAGES="nginx sqlite postgresql-client mysql-client mariadb-connector-c redis yq jq sudo nmap"
 
 RUN sed -i '/community/s/^#//' /etc/apk/repositories
@@ -35,7 +34,6 @@ RUN apk add --no-cache $BASE_PACKAGES
 RUN apk add --no-cache $DOCKER_PACKAGES
 RUN apk add --no-cache $AWS_PACKAGES
 RUN apk add --no-cache $GO_PACKAGES
-RUN apk add --no-cache $TOFU_PACKAGES
 RUN apk add --no-cache $EXTRA_PACKAGES
 RUN chsh root -s /bin/bash || true
 SHELL ["/bin/bash", "-c"]
@@ -46,6 +44,28 @@ RUN <<NODE_INSTALL
 
   node --version
 NODE_INSTALL
+
+# OpenTofu only reached Alpine's community repo in 3.20, so `apk add opentofu`
+# fails outright on the older bases (php7.4, php8.1). Install the upstream
+# release archive instead: it is a static binary, and every PHP variant then
+# gets the same pinned version regardless of what its base image packages.
+ARG TOFU_VERSION=1.12.5
+RUN <<TOFU_INSTALL
+  set -euo pipefail
+  case "$(apk --print-arch)" in
+    x86_64)  TOFU_ARCH=amd64 ;;
+    aarch64) TOFU_ARCH=arm64 ;;
+    *)       echo "No OpenTofu build for $(apk --print-arch)" >&2; exit 1 ;;
+  esac
+  TOFU_URL="https://github.com/opentofu/opentofu/releases/download/v${TOFU_VERSION}"
+  cd "$(mktemp -d)"
+  curl -fsSLO "${TOFU_URL}/tofu_${TOFU_VERSION}_linux_${TOFU_ARCH}.zip"
+  curl -fsSLO "${TOFU_URL}/tofu_${TOFU_VERSION}_SHA256SUMS"
+  grep " tofu_${TOFU_VERSION}_linux_${TOFU_ARCH}.zip\$" "tofu_${TOFU_VERSION}_SHA256SUMS" | sha256sum -c -
+  unzip -q "tofu_${TOFU_VERSION}_linux_${TOFU_ARCH}.zip" tofu -d /usr/local/bin
+  chmod +x /usr/local/bin/tofu
+  tofu version
+TOFU_INSTALL
 
 COPY ./fs/. /
 
