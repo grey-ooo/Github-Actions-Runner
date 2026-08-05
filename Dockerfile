@@ -67,6 +67,45 @@ RUN <<TOFU_INSTALL
   tofu version
 TOFU_INSTALL
 
+# The AWS CLI itself comes from apk (see AWS_PACKAGES above), but the wider AWS
+# toolchain is not packaged for Alpine. eksctl and aws-iam-authenticator are
+# static Go binaries, so the upstream release archives run fine on musl and
+# every PHP variant gets the same pinned version. Both publish a checksums file
+# we verify against.
+#
+# session-manager-plugin is deliberately omitted: AWS ships it only as a
+# glibc-linked binary (needs libresolv.so.2 etc.), so it cannot run on Alpine's
+# musl without bundling a full glibc — the same dead end as the AWS CLI v2
+# installer, which is why the v1/v2 apk build above is what provides `aws`.
+ARG EKSCTL_VERSION=0.229.0
+ARG AWS_IAM_AUTHENTICATOR_VERSION=0.7.18
+RUN <<AWS_TOOLS_INSTALL
+  set -euo pipefail
+  case "$(apk --print-arch)" in
+    x86_64)  GO_ARCH=amd64 ;;
+    aarch64) GO_ARCH=arm64 ;;
+    *)       echo "No AWS tool builds for $(apk --print-arch)" >&2; exit 1 ;;
+  esac
+
+  # eksctl
+  cd "$(mktemp -d)"
+  EKSCTL_URL="https://github.com/eksctl-io/eksctl/releases/download/v${EKSCTL_VERSION}"
+  curl -fsSLO "${EKSCTL_URL}/eksctl_Linux_${GO_ARCH}.tar.gz"
+  curl -fsSLO "${EKSCTL_URL}/eksctl_checksums.txt"
+  grep " eksctl_Linux_${GO_ARCH}.tar.gz\$" eksctl_checksums.txt | sha256sum -c -
+  tar -xzf "eksctl_Linux_${GO_ARCH}.tar.gz" -C /usr/local/bin eksctl
+  eksctl version
+
+  # aws-iam-authenticator
+  cd "$(mktemp -d)"
+  AIA_URL="https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v${AWS_IAM_AUTHENTICATOR_VERSION}"
+  curl -fsSLO "${AIA_URL}/aws-iam-authenticator_${AWS_IAM_AUTHENTICATOR_VERSION}_linux_${GO_ARCH}"
+  curl -fsSLO "${AIA_URL}/authenticator_${AWS_IAM_AUTHENTICATOR_VERSION}_checksums.txt"
+  grep " aws-iam-authenticator_${AWS_IAM_AUTHENTICATOR_VERSION}_linux_${GO_ARCH}\$" "authenticator_${AWS_IAM_AUTHENTICATOR_VERSION}_checksums.txt" | sha256sum -c -
+  install -m 0755 "aws-iam-authenticator_${AWS_IAM_AUTHENTICATOR_VERSION}_linux_${GO_ARCH}" /usr/local/bin/aws-iam-authenticator
+  aws-iam-authenticator version
+AWS_TOOLS_INSTALL
+
 COPY ./fs/. /
 
 RUN <<CONFIGURE
